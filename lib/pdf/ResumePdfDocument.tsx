@@ -808,20 +808,7 @@ export function ResumePdfDocument({ data }: { data: FullResumeData }) {
         <View style={styles.footerRow}>
           <View style={styles.footerOrangeRail} />
           <View style={styles.footerInner}>
-            <View style={styles.footerSidebarFoot} wrap={false}>
-              <Text style={styles.footerBrandLine}>
-                <Text style={styles.brandBe}>BE</Text>
-                <Text style={styles.brandOn}> On.</Text>
-              </Text>
-              <Text style={{ ...styles.brandUrl, ...styles.footerBrandLine }}>
-                brindleyengineering.com
-              </Text>
-            </View>
-            <View style={{ flex: 1, justifyContent: "center", paddingLeft: 0, paddingRight: 8 }}>
-              <Text style={{ fontSize: 9.5, ...pdfFont.italic(), color: "#4B5563", lineHeight: 1.5, textAlign: "left" }}>
-                {"Proprietary and Confidential — This document contains technical project experience of Brindley Engineering and is intended solely for evaluation purposes."}
-              </Text>
-            </View>
+            {/* Minimalist footer for Page 2 — no branding or legends */}
           </View>
         </View>
       </Page>
