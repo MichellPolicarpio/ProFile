@@ -47,41 +47,51 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Custom palette extensions */
+  --color-sidebar-label: #B5A898;
+  --color-topbar: #EAE6DF;
+  --color-topbar-border: #D6D1C8;
+  --color-preview-panel: #E0DBD4;
+  --color-preview-toolbar: #D6D0C8;
+  --color-btn-submit: #111827;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.985 0.001 70);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.95 0.002 70);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.985 0.001 70);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Brindley Palette Update */
+  --background: #F4F1EC;
+  --foreground: #6B5E52;
+  --card: #FFFFFF;
+  --card-foreground: #2D2416;
+  --popover: #FFFFFF;
+  --popover-foreground: #2D2416;
+  --primary: #E87722;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EAE6DF;
+  --secondary-foreground: #6B5E52;
+  --muted: #EAE6DF;
+  --muted-foreground: #B5A898;
+  --accent: #FFE8D4;
+  --accent-foreground: #C05E0E;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0 0);
-  --input: oklch(0.92 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0.001 70);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.975 0.002 70);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: #E8E4DE;
+  --input: #F0EDE8;
+  --ring: #E87722;
+  --chart-1: #E87722;
+  --chart-2: #B5A898;
+  --chart-3: #9C8E80;
+  --chart-4: #6B5E52;
+  --chart-5: #2D2416;
+  --radius: 0.75rem;
+
+  --sidebar: #F0EDE8;
+  --sidebar-foreground: #6B5E52;
+  --sidebar-primary: #E87722;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FFE8D4;
+  --sidebar-accent-foreground: #C05E0E;
+  --sidebar-border: #E0DBD4;
+  --sidebar-ring: #E87722;
 }
 
 .dark {

@@ -28,7 +28,7 @@ export type ResumePreviewProps = {
 };
 
 /** Brand orange aligned with Brindley logo artwork */
-const ORANGE = "#FF6C06";
+const ORANGE = "#E87722";
 const GRAY_GRADIENT = "linear-gradient(to bottom, #f9f9f9, #e6e6e6)";
 
 /** Vertical orange rail width (px) — full height from top through header + body */
@@ -148,7 +148,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
     return (
       <div
         ref={ref}
-        className={cn("flex flex-col gap-10 pt-0 px-4 pb-10 bg-[#F3F4F6] overflow-y-auto", className)}
+        className={cn("flex flex-col gap-10 pt-0 px-4 pb-10 bg-[#E0DBD4] overflow-y-auto", className)}
         style={{
           fontFamily: 'var(--font-tw-cen), "Tw Cen MT", "Tw Cen MT Condensed", "Century Gothic", system-ui, -apple-system, "Segoe UI", sans-serif',
           ...style,

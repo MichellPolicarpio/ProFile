@@ -84,15 +84,15 @@ export function NotificationsBell({
           if (!open) refresh();
         }}
         className={cn(
-          "relative flex size-9 items-center justify-center rounded-lg text-neutral-600 transition-colors hover:bg-neutral-100",
-          open && "bg-neutral-100",
+          "relative flex size-9 items-center justify-center rounded-lg text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50",
+          open && "bg-sidebar-accent/50",
         )}
         aria-label="Notificaciones"
         title="Notificaciones"
       >
         <Bell className="size-[18px]" />
         {unread > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#FF6C06] px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
             {unread > 99 ? "99+" : unread}
           </span>
         ) : null}
@@ -101,17 +101,17 @@ export function NotificationsBell({
       {open ? (
         <div
           ref={panelRef}
-          className="absolute right-0 top-[calc(100%+6px)] z-50 w-[min(calc(100vw-2rem),380px)] rounded-xl border border-neutral-200 bg-white py-2 shadow-lg"
+          className="absolute right-0 top-[calc(100%+6px)] z-50 w-[min(calc(100vw-2rem),380px)] rounded-xl border border-topbar-border bg-card py-2 shadow-lg"
         >
-          <div className="flex items-center justify-between border-b border-neutral-100 px-3 pb-2 pt-0.5">
-            <p className="text-[12px] font-semibold text-neutral-800">
+          <div className="flex items-center justify-between border-b border-topbar-border/60 px-3 pb-2 pt-0.5">
+            <p className="text-[12px] font-semibold text-sidebar-accent-foreground">
               Notificaciones
             </p>
             <Button
               type="button"
               variant="ghost"
               size="xs"
-              className="h-7 gap-1 text-[11px] text-neutral-600"
+              className="h-7 gap-1 text-[11px] text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/30"
               disabled={pending || unread === 0}
               onClick={() => {
                 startTransition(async () => {
@@ -132,18 +132,18 @@ export function NotificationsBell({
 
           <div className="max-h-[min(70vh,320px)] overflow-y-auto">
             {snapshot.items.length === 0 ? (
-              <p className="px-3 py-6 text-center text-[12px] text-neutral-500">
+              <p className="px-3 py-6 text-center text-[12px] text-muted-foreground">
                 No hay notificaciones.
               </p>
             ) : (
               <ul className="py-1">
                 {snapshot.items.map((n) => (
-                  <li key={n.id} className="border-b border-neutral-50 last:border-0">
+                  <li key={n.id} className="border-b border-topbar-border/40 last:border-0">
                     <Link
                       href="/dashboard/resume"
                       className={cn(
-                        "block px-3 py-2.5 transition-colors hover:bg-neutral-50",
-                        !n.isRead && "bg-[#FFF8F3]/80",
+                        "block px-3 py-2.5 transition-colors hover:bg-sidebar-accent/20",
+                        !n.isRead && "bg-sidebar-accent/40",
                       )}
                       onClick={() => {
                         if (!n.isRead) {
@@ -168,16 +168,16 @@ export function NotificationsBell({
                           {typeLabel(n.type)}
                         </span>
                         <time
-                          className="shrink-0 text-[10px] text-neutral-400"
+                          className="shrink-0 text-[10px] text-muted-foreground"
                           dateTime={n.createdAt}
                         >
                           {formatShort(n.createdAt)}
                         </time>
                       </div>
-                      <p className="line-clamp-3 text-[12px] leading-snug text-neutral-700">
+                      <p className="line-clamp-3 text-[12px] leading-snug text-foreground">
                         {n.message}
                       </p>
-                      <p className="mt-1 text-[10px] text-[#FF6C06]">
+                      <p className="mt-1 text-[10px] font-medium text-primary">
                         Ver currículum y comentarios →
                       </p>
                     </Link>

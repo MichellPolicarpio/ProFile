@@ -18,6 +18,7 @@ import {
   Settings,
   Users,
   History,
+  Search,
 } from "lucide-react";
 
 import { SplashScreen } from "@/components/layout/SplashScreen";
@@ -65,7 +66,7 @@ function mainNavItems(role: UserRole): NavItem[] {
     },
     {
       href: "/dashboard/history",
-      label: "History",
+      label: "CV History",
       icon: <History className="size-[17px] shrink-0" />,
     },
   ];
@@ -74,6 +75,11 @@ function mainNavItems(role: UserRole): NavItem[] {
       href: "/dashboard/hr/queue",
       label: "HR Queue",
       icon: <ClipboardList className="size-[17px] shrink-0" />,
+    });
+    items.push({
+      href: "/dashboard/hr/query",
+      label: "Query Resumes",
+      icon: <Search className="size-[17px] shrink-0" />,
     });
   }
   if (role === "Admin") {
@@ -123,8 +129,8 @@ function NavLink({
         className={cn(
           "mx-auto flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
           active
-            ? "bg-[#FFF4EC] text-[#FF6C06]"
-            : "text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700",
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground/50 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
         )}
       >
         {item.icon}
@@ -139,19 +145,19 @@ function NavLink({
       className={cn(
         "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors",
         active
-          ? "bg-card text-[#FF6C06] shadow-sm"
-          : "text-neutral-500 hover:bg-neutral-100/60 hover:text-neutral-800",
+          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground",
       )}
     >
       <span className={cn(
         "transition-colors",
-        active ? "text-[#FF6C06]" : "text-neutral-400 group-hover:text-neutral-600",
+        active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground",
       )}>
         {item.icon}
       </span>
       <span className="truncate">{item.label}</span>
       {active && (
-        <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF6C06]" />
+        <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-sidebar-accent-foreground" />
       )}
     </Link>
   );
@@ -170,11 +176,11 @@ function NavGroup({
   return (
     <div className="flex flex-col gap-0.5">
       {!collapsed ? (
-        <p className="mb-1 px-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-neutral-400">
+        <p className="mb-1 px-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-sidebar-label">
           {label}
         </p>
       ) : (
-        <div className="mx-auto my-2 h-px w-6 bg-neutral-200" />
+        <div className="mx-auto my-2 h-px w-6 bg-sidebar-border" />
       )}
       <nav className="flex flex-col gap-1">
         {children}
@@ -213,19 +219,19 @@ function SidebarBody(
       {/* ── Brand header ──────────────────────────────────────────────── */}
       <div
         className={cn(
-          "flex h-[75px] shrink-0 items-center border-b border-neutral-200",
-          collapsed ? "justify-center px-3" : "px-4 gap-3",
+          "flex h-[75px] shrink-0 items-center justify-center border-b border-sidebar-border transition-all duration-300",
+          collapsed ? "px-2" : "px-4 gap-3",
         )}
       >
         {/* TalentTrack logo badge */}
-        <div className="flex size-[32px] shrink-0 items-center justify-center rounded-[8px] bg-[#FF6C06]">
-          <span className="text-[15px] font-black leading-none text-white">T</span>
+        <div className="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] bg-primary shadow-md shadow-primary/10 transition-transform hover:scale-110 active:scale-95">
+          <span className="text-[19px] font-black leading-none text-primary-foreground">T</span>
         </div>
 
         {!collapsed && (
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-bold leading-tight tracking-tight text-neutral-900">
-              Talent<span className="text-[#FF6C06]">Track</span>
+          <div className="min-w-0">
+            <p className="text-[18px] font-extrabold leading-tight tracking-tight text-sidebar-foreground">
+              Talent<span className="text-primary">Track</span>
             </p>
           </div>
         )}
@@ -259,14 +265,14 @@ function SidebarBody(
       </div>
 
       {/* ── Footer — user row ─────────────────────────────────────────── */}
-      <div className="shrink-0 border-t border-neutral-100">
+      <div className="shrink-0 border-t border-sidebar-border/60">
         {collapsed ? (
           <div className="flex flex-col items-center gap-3 py-4">
             <div
               title={`${userName}\n${userEmail}\n${roleLabel}`}
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#FF6C06]"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary"
             >
-              <span className="text-[11px] font-bold leading-none text-white">
+              <span className="text-[11px] font-bold leading-none text-primary-foreground">
                 {initials}
               </span>
             </div>
@@ -275,7 +281,7 @@ function SidebarBody(
               onClick={onSignOut}
               title="Sign out"
               aria-label="Sign out"
-              className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+              className="rounded-md p-1.5 text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
             >
               <LogOut className="size-[15px]" />
             </button>
@@ -283,17 +289,17 @@ function SidebarBody(
         ) : (
           <div className="flex items-center gap-3 px-3.5 py-3.5">
             {/* Avatar */}
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#FF6C06]">
-              <span className="text-[11px] font-bold leading-none text-white">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary">
+              <span className="text-[11px] font-bold leading-none text-primary-foreground">
                 {initials}
               </span>
             </div>
             {/* Name / role */}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[12.5px] font-semibold leading-tight text-neutral-800">
+              <p className="truncate text-[12.5px] font-semibold leading-tight text-sidebar-foreground">
                 {userName || "User"}
               </p>
-              <p className="text-[10.5px] leading-tight text-neutral-400">
+              <p className="text-[10.5px] leading-tight text-sidebar-foreground/60">
                 {roleLabel}
               </p>
             </div>
@@ -303,7 +309,7 @@ function SidebarBody(
               onClick={onSignOut}
               title="Sign out"
               aria-label="Sign out"
-              className="shrink-0 rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+              className="shrink-0 rounded-md p-1.5 text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
             >
               <LogOut className="size-[15px]" />
             </button>
@@ -337,7 +343,7 @@ export function AppSidebar({ userName, userEmail, role }: AppSidebarProps) {
       <div className="relative hidden h-screen shrink-0 md:flex">
         <aside
           className={cn(
-            "h-full flex-col overflow-hidden border-r border-neutral-200 bg-white flex",
+            "h-full flex-col overflow-hidden border-sidebar-border flex",
             "transition-[width] duration-200 ease-in-out",
             collapsed ? "w-[60px]" : "w-[192px]",
           )}
@@ -358,7 +364,7 @@ export function AppSidebar({ userName, userEmail, role }: AppSidebarProps) {
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
-            "absolute top-[50%] -right-3 z-50 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-400 shadow-sm transition-all hover:border-[#FF6C06]/30 hover:text-[#FF6C06] hover:shadow-md",
+            "absolute top-[50%] -right-3 z-50 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-sm transition-all hover:border-primary/30 hover:text-primary hover:shadow-md",
             collapsed && "rotate-0",
             !collapsed && "rotate-0", // Icons handle the direction
           )}
@@ -399,11 +405,11 @@ export function AppSidebar({ userName, userEmail, role }: AppSidebarProps) {
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2.5">
-          <div className="flex size-7 items-center justify-center rounded-[7px] bg-[#FF6C06]">
+          <div className="flex size-7 items-center justify-center rounded-[7px] bg-[#E87722]">
             <span className="text-[13px] font-black leading-none text-white">T</span>
           </div>
           <span className="text-[13px] font-bold tracking-tight text-neutral-900">
-            Talent<span className="text-[#FF6C06]">Track</span>
+            Talent<span className="text-[#E87722]">Track</span>
           </span>
         </div>
       </div>

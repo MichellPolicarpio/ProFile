@@ -36,7 +36,7 @@ export function SectionShell({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold text-[#111827]">{title}</h2>
+        <h2 className="text-[18px] font-semibold text-card-foreground">{title}</h2>
         <div className="flex flex-wrap items-center gap-2">
           {!open && !disabled ? (
             <Button
@@ -44,7 +44,7 @@ export function SectionShell({
               size="sm"
               variant="outline"
               onClick={() => onOpenChange(true)}
-              className="h-9 gap-1.5 rounded-lg border-[#F17A28]/30 px-4 text-[13px] font-medium text-[#F17A28] shadow-sm hover:bg-[#FFF7ED] hover:text-[#F17A28]"
+              className="h-9 gap-1.5 rounded-lg border-primary/30 px-4 text-[13px] font-medium text-primary shadow-sm hover:bg-sidebar-accent/50 hover:text-primary"
             >
               <Plus className="size-3.5" aria-hidden />
               {addLabel}
@@ -59,14 +59,14 @@ export function SectionShell({
       {open ? (
         <div
           ref={formRef}
-          className="mt-1 w-full min-w-0 border-t border-neutral-200 pt-5 animate-in fade-in slide-in-from-top-2 duration-200"
+          className="mt-1 w-full min-w-0 border-t border-border pt-5 animate-in fade-in slide-in-from-top-2 duration-200"
         >
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-neutral-800">{addLabel}</h3>
+            <h3 className="text-sm font-semibold text-card-foreground/80">{addLabel}</h3>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-md p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground"
             >
               <X className="size-4" />
             </button>

@@ -20,12 +20,15 @@ type DashboardContextType = {
   setActiveResumeStatus: (status: ResumeStatus | null) => void;
   editorActions: EditorActions;
   setEditorActions: (actions: EditorActions) => void;
+  isEditHintActive: boolean;
+  triggerEditHint: () => void;
 };
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [activeResumeStatus, setActiveResumeStatus] = useState<ResumeStatus | null>(null);
+  const [isEditHintActive, setIsEditHintActive] = useState(false);
   const [editorActions, setEditorActions] = useState<EditorActions>(null);
 
   const stableSetActiveResumeStatus = useCallback((status: ResumeStatus | null) => {
@@ -36,12 +39,20 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setEditorActions(actions);
   }, []);
 
+  const triggerEditHint = useCallback(() => {
+    setIsEditHintActive(true);
+    const timer = setTimeout(() => setIsEditHintActive(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const value = useMemo(() => ({
     activeResumeStatus,
     setActiveResumeStatus: stableSetActiveResumeStatus,
     editorActions,
     setEditorActions: stableSetEditorActions,
-  }), [activeResumeStatus, stableSetActiveResumeStatus, editorActions, stableSetEditorActions]);
+    isEditHintActive,
+    triggerEditHint,
+  }), [activeResumeStatus, stableSetActiveResumeStatus, editorActions, stableSetEditorActions, isEditHintActive, triggerEditHint]);
 
   return (
     <DashboardContext.Provider value={value}>

@@ -143,7 +143,7 @@ export function ResumeEditorClient({
   const [downloading, setDownloading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const router = useRouter();
-  const { setActiveResumeStatus } = useDashboard();
+  const { setActiveResumeStatus, triggerEditHint } = useDashboard();
 
   useEffect(() => {
     setActiveResumeStatus(status);
@@ -413,7 +413,7 @@ export function ResumeEditorClient({
                           type="button"
                           variant="outline"
                           size="icon"
-                          className="h-9 w-8 shrink-0 rounded-lg border-neutral-200/90 bg-white text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-35"
+                          className="h-9 w-8 shrink-0 rounded-lg border-border bg-card text-foreground shadow-sm hover:bg-sidebar-accent/50 disabled:opacity-35"
                           disabled={!tabStripScroll.canLeft}
                           aria-label="Ver secciones anteriores"
                           onClick={() => scrollTabStrip(-1)}
@@ -424,7 +424,7 @@ export function ResumeEditorClient({
 
                       <div
                         ref={tabStripScrollRef}
-                        className="min-h-9 min-w-0 flex-1 overflow-x-auto scroll-smooth rounded-lg border border-neutral-200/90 bg-neutral-100/30 scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                        className="min-h-9 min-w-0 flex-1 overflow-x-auto scroll-smooth rounded-lg border border-border bg-sidebar/50 scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                       >
                         <TabsList
                           variant="default"
@@ -436,7 +436,7 @@ export function ResumeEditorClient({
                               <TabsTrigger
                                 key={tab.value}
                                 value={tab.value}
-                                className="h-7 shrink-0 gap-2 rounded-md border-0 bg-transparent px-3 text-[12px] font-medium text-neutral-500 shadow-none transition-all data-active:bg-[#FF6C06] data-active:text-white data-active:shadow-sm"
+                                className="h-7 shrink-0 gap-2 rounded-md border-0 bg-transparent px-3 text-[12px] font-medium text-sidebar-foreground/60 shadow-none transition-all data-active:bg-primary data-active:text-primary-foreground data-active:shadow-sm"
                               >
                                 <Icon className="size-3.5 shrink-0" />
                                 <span className="whitespace-nowrap">{tab.label}</span>
@@ -451,7 +451,7 @@ export function ResumeEditorClient({
                           type="button"
                           variant="outline"
                           size="icon"
-                          className="h-9 w-8 shrink-0 rounded-lg border-neutral-200/90 bg-white text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-35"
+                          className="h-9 w-8 shrink-0 rounded-lg border-border bg-card text-foreground shadow-sm hover:bg-sidebar-accent/50 disabled:opacity-35"
                           disabled={!tabStripScroll.canRight}
                           aria-label="Ver más secciones"
                           onClick={() => scrollTabStrip(1)}
@@ -468,7 +468,10 @@ export function ResumeEditorClient({
                     {/* Desktop Actions (Absolute, aligned with section titles) */}
 
                     {/* Scrollable Form Content */}
-                    <div className="flex-1 overflow-y-auto px-6 pt-3 pb-8 scroll-smooth">
+                    <div 
+                      className="flex-1 overflow-y-auto px-6 pt-3 pb-8 scroll-smooth"
+                      onPointerDownCapture={() => isLocked && triggerEditHint()}
+                    >
                       {/* Mobile preview button */}
                       <div className="mb-4 flex items-center justify-end lg:hidden">
                         <Button
@@ -581,16 +584,16 @@ export function ResumeEditorClient({
                 </Tabs>
               </div>
 
-              <div className="hidden min-w-0 flex-1 flex-col border-l border-neutral-100 bg-[#F3F4F6] lg:flex">
+              <div className="hidden min-w-0 flex-1 flex-col border-l border-preview-toolbar-border bg-preview-panel lg:flex">
                 {/* Right Header */}
-                <div className="flex shrink-0 w-full min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-2 border-b border-neutral-200 bg-sidebar px-4 sm:px-6 py-2 min-h-[64px]">
+                <div className="flex shrink-0 w-full min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-2 border-b border-preview-toolbar-border bg-preview-toolbar px-4 sm:px-6 py-2 min-h-[64px]">
                   {isLocked && !hasUnsavedChanges && (status === "DRAFT" || status === "NEEDS_CHANGES") && (
                     <Button
                       type="button"
                       size="sm"
                       disabled={isSubmitting || isSaving}
                       onClick={handleSubmitFinal}
-                      className="h-8 gap-1.5 rounded-full bg-neutral-900 px-4 text-[11px] font-semibold text-white shadow-sm hover:bg-neutral-800 disabled:opacity-40"
+                      className="h-8 gap-1.5 rounded-full bg-btn-submit px-4 text-[11px] font-semibold text-white shadow-sm hover:bg-btn-submit/90 disabled:opacity-40"
                     >
                       {isSubmitting ? (
                         <Loader2 className="size-3.5 animate-spin" />
@@ -600,26 +603,26 @@ export function ResumeEditorClient({
                       {isSubmitting ? "Sending…" : "Submit Resume"}
                     </Button>
                   )}
-                  <div className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-neutral-200/90 bg-neutral-50/95 px-1 py-0.5 shadow-sm shadow-neutral-200/30">
+                  <div className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-preview-toolbar-border bg-card px-1 py-0.5 shadow-sm">
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
-                      className="size-7 rounded-full text-neutral-600 hover:bg-white hover:text-neutral-900"
+                      className="size-7 rounded-full text-preview-toolbar-label hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                       disabled={zoom <= ZOOM_MIN}
                       aria-label="Zoom out"
                       onClick={() => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP))}
                     >
                       <ZoomOut className="size-4" strokeWidth={2.25} />
                     </Button>
-                    <span className="min-w-[2.25rem] px-0.5 text-center text-[10px] font-semibold tabular-nums text-neutral-700 sm:font-medium sm:text-[11px]">
+                    <span className="min-w-[2.25rem] px-0.5 text-center text-[10px] font-semibold tabular-nums text-preview-toolbar-label sm:font-medium sm:text-[11px]">
                       {zoom}%
                     </span>
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
-                      className="size-7 rounded-full text-neutral-600 hover:bg-white hover:text-neutral-900"
+                      className="size-7 rounded-full text-preview-toolbar-label hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                       disabled={zoom >= ZOOM_MAX}
                       aria-label="Zoom in"
                       onClick={() => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP))}
@@ -631,20 +634,20 @@ export function ResumeEditorClient({
                     type="button"
                     size="icon"
                     variant="ghost"
-                    className="size-7 shrink-0 rounded-full text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                    className="size-7 shrink-0 rounded-full text-preview-toolbar-label hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                     aria-label="Reset zoom to default"
                     title="Reset zoom"
                     onClick={resetPreviewZoom}
                   >
                     <RotateCcw className="size-[16px]" strokeWidth={2.25} />
                   </Button>
-                  <span className="h-4 w-px bg-neutral-200" />
+                  <span className="h-4 w-px bg-preview-toolbar-border" />
                   <div className="flex items-center gap-1">
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-7 rounded-full text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                      className="size-7 rounded-full text-preview-toolbar-label hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                       onClick={() => handleExportPdf("print")}
                       aria-label="Print"
                     >
@@ -654,7 +657,7 @@ export function ResumeEditorClient({
                       type="button"
                       disabled={downloading}
                       onClick={() => handleExportPdf("download")}
-                      className="h-7 gap-1.5 rounded-full bg-[#FF6C06] px-3 font-semibold text-white transition-colors hover:bg-[#D4691A] disabled:opacity-60 text-[11px]"
+                      className="h-7 gap-1.5 rounded-full bg-primary px-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60 text-[11px]"
                     >
                       {downloading ? (
                         <Loader2 className="size-[12px] animate-spin" />
@@ -693,7 +696,7 @@ export function ResumeEditorClient({
               <Button
                 type="button"
                 size="sm"
-                className="gap-1.5 bg-[#FF6C06] text-white hover:bg-[#D06A1D]"
+                className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => handleExportPdf("download")}
               >
                 <Download className="size-3.5" /> PDF
