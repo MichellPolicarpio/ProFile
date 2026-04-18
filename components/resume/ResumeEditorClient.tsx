@@ -36,7 +36,7 @@ import {
 } from "@/components/resume/ResumePreview";
 import { PendingReviewView } from "@/components/resume/PendingReviewView";
 import { ApprovedView } from "@/components/resume/ApprovedView";
-import { PersonalTab } from "@/components/resume/tabs/PersonalTab";
+import { PersonalTab, type PersonalDraft } from "@/components/resume/tabs/PersonalTab";
 import { ExperienceTab } from "@/components/resume/tabs/ExperienceTab";
 import { EducationTab } from "@/components/resume/tabs/EducationTab";
 import { ProjectsTab } from "@/components/resume/tabs/ProjectsTab";
