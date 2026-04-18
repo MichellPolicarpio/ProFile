@@ -93,27 +93,12 @@ export function HrReviewClient({
 }: HrReviewClientProps) {
   const [zoomPct, setZoomPct] = useState(90);
 
-  const exp = useMemo(
-    () => normalizeWorkExperiences(experiences.filter((e) => e.isVisibleOnResume)),
-    [experiences],
-  );
-  const edu = useMemo(
-    () => education.filter((e) => e.isVisibleOnResume),
-    [education],
-  );
-  const sk = useMemo(
-    () => skills.filter((s) => s.isVisibleOnResume),
-    [skills],
-  );
+  const exp = useMemo(() => normalizeWorkExperiences(experiences), [experiences]);
+  const edu = education;
+  const sk = skills;
   const cert = certifications;
-  const proj = useMemo(
-    () => resumeProjects.filter((p) => p.isVisibleOnResume),
-    [resumeProjects],
-  );
-  const ach = useMemo(
-    () => achievements.filter((a) => a.isVisibleOnResume),
-    [achievements],
-  );
+  const proj = resumeProjects;
+  const ach = achievements;
 
   const scale = zoomPct / 100;
 

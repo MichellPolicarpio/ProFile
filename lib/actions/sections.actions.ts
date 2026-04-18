@@ -27,7 +27,7 @@ import {
   deleteResumeProject,
   reorderResumeProjects,
   upsertLicense,
-  deleteSkill as deleteLicense, // deleteSkill is actually generic in name but I'll use the specific ones if possible. Wait, let me check.
+  deleteLicense,
   reorderLicenses,
   updateItemVisibility,
 } from "@/lib/repositories/sections.repository";
@@ -60,10 +60,15 @@ async function getVerifiedEmployee(resumeId: string) {
   return employee;
 }
 
-async function afterContentMutation(resumeId: string, employeeId: string) {
-  const invalidated = await touchResumeUpdatedAt(resumeId, employeeId);
+async function afterContentMutation(
+  resumeId: string,
+  employeeId: string,
+  options: { shouldInvalidateApproval?: boolean; revalidateHR?: boolean } = {},
+) {
+  const { shouldInvalidateApproval = true, revalidateHR = true } = options;
+  const invalidated = await touchResumeUpdatedAt(resumeId, employeeId, shouldInvalidateApproval);
   revalidatePath(REVALIDATE_PATH);
-  if (invalidated) {
+  if (revalidateHR && (invalidated || shouldInvalidateApproval)) {
     revalidatePath("/dashboard/hr/queue");
     revalidatePath(`/dashboard/hr/review/${resumeId}`);
   }
@@ -260,7 +265,6 @@ export async function removeLicense(
   id: string,
 ): Promise<void> {
   const employee = await getVerifiedEmployee(resumeId);
-  const { deleteLicense } = await import("@/lib/repositories/sections.repository");
   await deleteLicense(id, resumeId);
   await afterContentMutation(resumeId, employee.id);
 }
@@ -291,5 +295,10 @@ export async function toggleVisibilityAction(
 ): Promise<void> {
   const employee = await getVerifiedEmployee(resumeId);
   await updateItemVisibility(table, itemId, resumeId, visible);
-  await afterContentMutation(resumeId, employee.id);
+  // Visibility toggles do NOT invalidate HR approval (OPT-05)
+  // and we don't necessarily need to revalidate HR views immediately for just a toggle.
+  await afterContentMutation(resumeId, employee.id, {
+    shouldInvalidateApproval: false,
+    revalidateHR: false,
+  });
 }

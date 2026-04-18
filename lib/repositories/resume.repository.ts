@@ -51,18 +51,23 @@ async function mapProfile(row: Record<string, unknown>): Promise<ResumeProfile |
   if (row.ProfileId == null) {
     return null;
   }
+  const [summary, linkedin, address, phone, email] = await Promise.all([
+    row.ProfessionalSummary == null ? null : decryptData(String(row.ProfessionalSummary)),
+    row.LinkedInUrl == null ? null : decryptData(String(row.LinkedInUrl)),
+    row.HomeAddress == null ? null : decryptData(String(row.HomeAddress)),
+    row.PersonalPhone == null ? null : decryptData(String(row.PersonalPhone)),
+    row.PersonalEmail == null ? null : decryptData(String(row.PersonalEmail)),
+  ]);
+
   return {
     id: String(row.ProfileId),
     resumeId: String(row.ProfileResumeId),
-    professionalSummary:
-      row.ProfessionalSummary == null
-        ? null
-        : await decryptData(String(row.ProfessionalSummary)),
     jobTitle: row.JobTitle == null ? null : String(row.JobTitle),
-    linkedInUrl: row.LinkedInUrl == null ? null : await decryptData(String(row.LinkedInUrl)),
-    homeAddress: row.HomeAddress == null ? null : await decryptData(String(row.HomeAddress)),
-    personalPhone: row.PersonalPhone == null ? null : await decryptData(String(row.PersonalPhone)),
-    personalEmail: row.PersonalEmail == null ? null : await decryptData(String(row.PersonalEmail)),
+    professionalSummary: summary,
+    linkedInUrl: linkedin,
+    homeAddress: address,
+    personalPhone: phone,
+    personalEmail: email,
     createdAt: row.ProfileCreatedAt as Date,
     updatedAt: row.ProfileUpdatedAt as Date,
   };
@@ -174,33 +179,42 @@ export async function getResumeById(
  * deactivated (`IsPublicLinkActive = 0`), and an audit row records the
  * invalidation so HR sees a clear trail.
  *
+ * Use `shouldInvalidateApproval = false` for minor changes like visibility toggles
+ * that shouldn't reset the status back to DRAFT or kill the public link.
+ *
  * @returns `true` when approval was cleared (was `APPROVED` before this call).
  */
 export async function touchResumeUpdatedAt(
   resumeId: string,
   actorEmployeeId: string,
+  shouldInvalidateApproval: boolean = true,
 ): Promise<boolean> {
   return runWithPool(async (pool) => {
-    const pre = pool.request();
-    pre.input("resumeId", sql.UniqueIdentifier, resumeId);
-    const preRes = await pre.query(`
-      SELECT CASE WHEN Status = N'APPROVED' THEN 1 ELSE 0 END AS WasApproved
-      FROM dbo.Resumes WHERE Id = @resumeId
-    `);
-    const wasApproved = Boolean(preRes.recordset[0]?.WasApproved);
+    let wasApproved = false;
+
+    if (shouldInvalidateApproval) {
+      const pre = pool.request();
+      pre.input("resumeId", sql.UniqueIdentifier, resumeId);
+      const preRes = await pre.query(`
+        SELECT CASE WHEN Status = N'APPROVED' THEN 1 ELSE 0 END AS WasApproved
+        FROM dbo.Resumes WHERE Id = @resumeId
+      `);
+      wasApproved = Boolean(preRes.recordset[0]?.WasApproved);
+    }
 
     const upd = pool.request();
     upd.input("resumeId", sql.UniqueIdentifier, resumeId);
+    upd.input("shouldInvalidateApproval", sql.Bit, shouldInvalidateApproval ? 1 : 0);
     await upd.query(`
       UPDATE dbo.Resumes
       SET
         UpdatedAt = SYSUTCDATETIME(),
-        Status = CASE WHEN Status = N'APPROVED' THEN N'DRAFT' ELSE Status END,
-        IsPublicLinkActive = CASE WHEN Status = N'APPROVED' THEN 0 ELSE IsPublicLinkActive END
+        Status = CASE WHEN @shouldInvalidateApproval = 1 AND Status = N'APPROVED' THEN N'DRAFT' ELSE Status END,
+        IsPublicLinkActive = CASE WHEN @shouldInvalidateApproval = 1 AND Status = N'APPROVED' THEN 0 ELSE IsPublicLinkActive END
       WHERE Id = @resumeId
     `);
 
-    if (wasApproved) {
+    if (shouldInvalidateApproval && wasApproved) {
       const ins = pool.request();
       ins.input("resumeId", sql.UniqueIdentifier, resumeId);
       ins.input("actorEmployeeId", sql.UniqueIdentifier, actorEmployeeId);

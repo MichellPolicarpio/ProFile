@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SectionShell } from "./SectionShell";
+import { useGenericSection } from "@/lib/hooks/useGenericSection";
 import { Badge } from "@/components/ui/badge";
 
 const LICENSE_TYPES = ["PE", "SE", "EIT/EI", "Other"];
@@ -412,83 +413,29 @@ export function LicensesSection({
   disabled?: boolean;
   headerActions?: React.ReactNode;
 }) {
-  const [items, setItems] = useState(initial);
-
-  useEffect(() => {
-    setItems(initial);
-  }, [initial]);
-
-  const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const sensors = useSensors(useSensor(PointerSensor));
-
-  const [localDirty, setLocalDirty] = useState(false);
-  const [activeSave, setActiveSave] = useState<(() => void) | null>(null);
-
-  const hijackedActions = React.useMemo(() => {
-    if (!React.isValidElement(headerActions)) return headerActions;
-    return React.cloneElement(headerActions as React.ReactElement<any>, {
-      onSave: localDirty && activeSave ? activeSave : (headerActions.props as any).onSave,
-      hasUnsavedChanges: localDirty || (headerActions.props as any).hasUnsavedChanges,
-    });
-  }, [headerActions, localDirty, activeSave]);
-
-  function updateItems(updater: (prev: License[]) => License[]) {
-    setItems((prev) => {
-      const next = updater(prev);
-      if (onItemsChange) setTimeout(() => onItemsChange(next), 0);
-      return next;
-    });
-  }
-
-  function handleDraftChange(id: string, patch: Partial<License>) {
-    updateItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-  }
-
-  function handleToggleVisibility(id: string, visible: boolean) {
-    updateItems((prev) => prev.map((i) => (i.id === id ? { ...i, isVisibleOnResume: visible } : i)));
-    startTransition(async () => {
-      try {
-        await toggleVisibilityAction(resumeId, "Licenses", id, visible);
-        onPersisted?.();
-      } catch {
-        updateItems((prev) => prev.map((i) => (i.id === id ? { ...i, isVisibleOnResume: !visible } : i)));
-        toast.error("Could not update visibility.");
-      }
-    });
-  }
-
-  function handleDelete(id: string) {
-    startTransition(async () => {
-      try {
-        await removeLicense(resumeId, id);
-        setItems((prev) => prev.filter((i) => i.id !== id));
-        toast.success("Entry deleted.");
-        onPersisted?.();
-      } catch {
-        toast.error("Could not delete.");
-      }
-    });
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const reordered = arrayMove(
-      items,
-      items.findIndex((i) => i.id === active.id),
-      items.findIndex((i) => i.id === over.id),
-    ).map((item, idx) => ({ ...item, sortOrder: idx + 1 }));
-    setItems(reordered);
-    startTransition(async () => {
-      try {
-        await reorderLicensesAction(resumeId, reordered.map((i) => ({ id: i.id, sortOrder: i.sortOrder })));
-        onPersisted?.();
-      } catch {
-        toast.error("Could not save order.");
-      }
-    });
-  }
+  const {
+    items,
+    open,
+    setOpen,
+    pending,
+    sensors,
+    hijackedActions,
+    handleDraftChange,
+    handleToggleVisibility,
+    handleDelete,
+    handleDragEnd,
+    setLocalDirty,
+    setActiveSave,
+  } = useGenericSection({
+    resumeId,
+    tableName: "Licenses",
+    initial,
+    onItemsChange,
+    onPersisted,
+    removeAction: removeLicense,
+    reorderAction: reorderLicensesAction,
+    headerActions,
+  });
 
   return (
     <SectionShell

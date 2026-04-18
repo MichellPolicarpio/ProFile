@@ -41,6 +41,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SectionShell } from "./SectionShell";
+import { useGenericSection } from "@/lib/hooks/useGenericSection";
 
 function toDateStr(d: Date | null): string | null {
   return d ? (d.toISOString().split("T")[0] ?? null) : null;
@@ -355,7 +356,6 @@ export function WorkExperienceSection({
   resumeId,
   initial,
   onItemsChange,
-  /** Called after a successful server write so “last saved” can update. */
   onPersisted,
   disabled = false,
   headerActions,
@@ -367,87 +367,29 @@ export function WorkExperienceSection({
   disabled?: boolean;
   headerActions?: React.ReactNode;
 }) {
-  const [items, setItems] = useState(initial);
-
-  useEffect(() => {
-    setItems(initial);
-  }, [initial]);
-
-  const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const sensors = useSensors(useSensor(PointerSensor));
-
-  const [localDirty, setLocalDirty] = useState(false);
-  const [activeSave, setActiveSave] = useState<(() => void) | null>(null);
-
-  const hijackedActions = React.useMemo(() => {
-    if (!React.isValidElement(headerActions)) return headerActions;
-    return React.cloneElement(headerActions as React.ReactElement<any>, {
-      onSave: localDirty && activeSave ? activeSave : (headerActions.props as any).onSave,
-      hasUnsavedChanges: localDirty || (headerActions.props as any).hasUnsavedChanges,
-    });
-  }, [headerActions, localDirty, activeSave]);
-
-  function updateItems(updater: (prev: WorkExperience[]) => WorkExperience[]) {
-    setItems((prev) => {
-      const next = updater(prev);
-      if (onItemsChange) setTimeout(() => onItemsChange(next), 0);
-      return next;
-    });
-  }
-
-  function handleDraftChange(id: string, patch: Partial<WorkExperience>) {
-    updateItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-  }
-
-  function handleToggleVisibility(id: string, visible: boolean) {
-    updateItems((prev) => prev.map((i) => (i.id === id ? { ...i, isVisibleOnResume: visible } : i)));
-    startTransition(async () => {
-      try {
-        await toggleVisibilityAction(resumeId, "WorkExperiences", id, visible);
-        onPersisted?.();
-      } catch {
-        updateItems((prev) => prev.map((i) => (i.id === id ? { ...i, isVisibleOnResume: !visible } : i)));
-        toast.error("Could not update visibility.");
-      }
-    });
-  }
-
-  function handleDelete(id: string) {
-    startTransition(async () => {
-      try {
-        await removeWorkExperience(resumeId, id);
-        updateItems((prev) => prev.filter((i) => i.id !== id));
-        toast.success("Entry deleted.");
-        onPersisted?.();
-      } catch {
-        toast.error("Could not delete.");
-      }
-    });
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = items.findIndex((i) => i.id === active.id);
-    const newIndex = items.findIndex((i) => i.id === over.id);
-    const reordered = arrayMove(items, oldIndex, newIndex).map((item, idx) => ({
-      ...item,
-      sortOrder: idx + 1,
-    }));
-    updateItems(() => reordered);
-    startTransition(async () => {
-      try {
-        await reorderWorkExperiencesAction(
-          resumeId,
-          reordered.map((i) => ({ id: i.id, sortOrder: i.sortOrder })),
-        );
-        onPersisted?.();
-      } catch {
-        toast.error("Could not save order.");
-      }
-    });
-  }
+  const {
+    items,
+    open,
+    setOpen,
+    pending,
+    sensors,
+    hijackedActions,
+    handleDraftChange,
+    handleToggleVisibility,
+    handleDelete,
+    handleDragEnd,
+    setLocalDirty,
+    setActiveSave,
+  } = useGenericSection({
+    resumeId,
+    tableName: "WorkExperiences",
+    initial,
+    onItemsChange,
+    onPersisted,
+    removeAction: removeWorkExperience,
+    reorderAction: reorderWorkExperiencesAction,
+    headerActions,
+  });
 
   return (
     <SectionShell

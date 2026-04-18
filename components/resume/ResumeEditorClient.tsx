@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback, useMemo, useLayoutEffect, useEffect } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  Award,
   BadgeCheck,
   Briefcase,
   ChevronLeft,
@@ -59,37 +60,12 @@ import type {
   License,
 } from "@/lib/db/types";
 import type { UserRole } from "@/types/user-role";
-import type { PersonalDraft } from "@/components/resume/tabs/PersonalTab";
+import { usePreviewState } from "@/lib/hooks/usePreviewState";
+import { useResumeEditor } from "@/lib/hooks/useResumeEditor";
+import { useTabScroll } from "@/lib/hooks/useTabScroll";
+import { useEditorChromeHeight } from "@/lib/hooks/useEditorChromeHeight";
 
 const PROFILE_STUB_TS = new Date(0);
-
-function buildPreviewProfile(
-  profile: ResumeProfile | null,
-  draft: PersonalDraft,
-  resumeId: string,
-): ResumeProfile {
-  const base: ResumeProfile = profile ?? {
-    id: "",
-    resumeId,
-    jobTitle: null,
-    professionalSummary: null,
-    linkedInUrl: null,
-    homeAddress: null,
-    personalPhone: null,
-    personalEmail: null,
-    createdAt: PROFILE_STUB_TS,
-    updatedAt: PROFILE_STUB_TS,
-  };
-  return {
-    ...base,
-    jobTitle: draft.jobTitle.trim() || null,
-    professionalSummary: draft.professionalSummary.trim() || null,
-    linkedInUrl: draft.linkedInUrl.trim() || null,
-    homeAddress: draft.homeAddress.trim() || null,
-    personalPhone: draft.personalPhone.trim() || null,
-    personalEmail: draft.personalEmail.trim() || null,
-  };
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,7 +102,7 @@ const TABS: readonly {
   { value: "projects", label: "Projects", icon: FolderKanban },
   { value: "skills", label: "Skills", icon: Sparkles },
   { value: "certifications", label: "Certifications", icon: BadgeCheck },
-  { value: "licenses", label: "Licenses", icon: Trophy }, // Using Trophy for licenses for now, or I can use another icon.
+  { value: "licenses", label: "Licenses", icon: Award },
   { value: "achievements", label: "Achievements", icon: Trophy },
 ] as const;
 
@@ -164,356 +140,144 @@ export function ResumeEditorClient({
   const previewRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(ZOOM_DEFAULT);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const router = useRouter();
   const { setActiveResumeStatus } = useDashboard();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     setActiveResumeStatus(status);
     return () => setActiveResumeStatus(null);
   }, [status, setActiveResumeStatus]);
 
   useLayoutEffect(() => {
-    const mq = window.matchMedia(
-      `(min-width: ${LARGE_PREVIEW_MIN_WIDTH_PX}px)`,
-    );
+    const mq = window.matchMedia(`(min-width: ${LARGE_PREVIEW_MIN_WIDTH_PX}px)`);
     if (mq.matches) {
       setZoom(ZOOM_DEFAULT_LARGE);
     }
   }, []);
 
   const resetPreviewZoom = useCallback(() => {
-    const mq = window.matchMedia(
-      `(min-width: ${LARGE_PREVIEW_MIN_WIDTH_PX}px)`,
-    );
+    const mq = window.matchMedia(`(min-width: ${LARGE_PREVIEW_MIN_WIDTH_PX}px)`);
     setZoom(mq.matches ? ZOOM_DEFAULT_LARGE : ZOOM_DEFAULT);
   }, []);
 
-  useLayoutEffect(() => {
-    const el = editorChromeRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      setEditorChromeHeight(el.getBoundingClientRect().height);
-    });
-    ro.observe(el);
-    setEditorChromeHeight(el.getBoundingClientRect().height);
-    return () => ro.disconnect();
-  }, []);
-  const [downloading, setDownloading] = useState(false);
-
-  // ── Editor lock/edit/save/submit state machine ──
-  const [isLocked, setIsLocked] = useState(true);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("personal");
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { setEditorActions } = useDashboard();
-
-  const tabStripScrollRef = useRef<HTMLDivElement>(null);
-  /** Left header (status + actions) height so the preview chrome matches and seams align. */
-  const editorChromeRef = useRef<HTMLDivElement>(null);
-  const [editorChromeHeight, setEditorChromeHeight] = useState(0);
-
-  const [tabStripScroll, setTabStripScroll] = useState({
-    overflow: false,
-    canLeft: false,
-    canRight: false,
-  });
-
-  const refreshTabStripScroll = useCallback(() => {
-    const el = tabStripScrollRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    const overflow = scrollWidth > clientWidth + 2;
-    setTabStripScroll({
-      overflow,
-      canLeft: overflow && scrollLeft > 2,
-      canRight: overflow && scrollLeft + clientWidth < scrollWidth - 2,
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    const el = tabStripScrollRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => refreshTabStripScroll());
-    ro.observe(el);
-    el.addEventListener("scroll", refreshTabStripScroll, { passive: true });
-    window.addEventListener("resize", refreshTabStripScroll);
-    return () => {
-      ro.disconnect();
-      el.removeEventListener("scroll", refreshTabStripScroll);
-      window.removeEventListener("resize", refreshTabStripScroll);
-    };
-  }, [refreshTabStripScroll]);
-
-  useLayoutEffect(() => {
-    refreshTabStripScroll();
-    const root = tabStripScrollRef.current;
-    if (!root) return;
-    const id = requestAnimationFrame(() => {
-      const activeEl = root.querySelector("[data-active]");
-      if (activeEl instanceof HTMLElement) {
-        activeEl.scrollIntoView({
-          behavior: "smooth",
-          inline: "nearest",
-          block: "nearest",
-        });
-      }
-      refreshTabStripScroll();
-    });
-    return () => cancelAnimationFrame(id);
-  }, [activeTab, refreshTabStripScroll]);
-
-  const scrollTabStrip = useCallback((direction: -1 | 1) => {
-    const el = tabStripScrollRef.current;
-    if (!el) return;
-    const delta = Math.max(180, Math.floor(el.clientWidth * 0.55));
-    el.scrollBy({ left: direction * delta, behavior: "smooth" });
-  }, []);
-
-  // ── Personal (profile) draft form ──
-  const [profileDraft, setProfileDraft] = useState<PersonalDraft>({
-    jobTitle:              profile?.jobTitle ?? "",
-    professionalSummary:   profile?.professionalSummary ?? "",
-    linkedInUrl:           profile?.linkedInUrl ?? "",
-    homeAddress:           profile?.homeAddress ?? "",
-    personalPhone:         profile?.personalPhone ?? "",
-    personalEmail:         profile?.personalEmail ?? "",
-  });
-
-  // Cannot unlock while resume is under HR review
-  const isPendingReview = status === "PENDING_APPROVAL";
-
   const serverSavedAt = useMemo(
-    () =>
-      latestOf(
-        coerceDate(resumeUpdatedAt),
-        coerceDate(profile?.updatedAt),
-      ),
+    () => latestOf(coerceDate(resumeUpdatedAt), coerceDate(profile?.updatedAt)),
     [resumeUpdatedAt, profile?.updatedAt],
   );
 
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(serverSavedAt);
-  const router = useRouter();
+  const bumpLastSaved = useCallback(() => setLastSavedAt(new Date()), []);
 
   useLayoutEffect(() => {
     setLastSavedAt((prev) => {
       if (!serverSavedAt) return prev;
-      if (!prev || serverSavedAt.getTime() >= prev.getTime()) {
-        return serverSavedAt;
-      }
+      if (!prev || serverSavedAt.getTime() >= prev.getTime()) return serverSavedAt;
       return prev;
     });
   }, [serverSavedAt]);
-
-  const bumpLastSaved = useCallback(() => {
-    setLastSavedAt(new Date());
-  }, []);
 
   const onSectionPersisted = useCallback(() => {
     bumpLastSaved();
     router.refresh();
   }, [bumpLastSaved, router]);
 
-  // ── Visible items for the preview panel ──
-  const visibleExperiences    = experiences.filter((e) => e.isVisibleOnResume);
-  const visibleEducation      = education.filter((e) => e.isVisibleOnResume);
-  const visibleSkills         = skills.filter((s) => s.isVisibleOnResume);
-  const visibleCertifications = certifications.filter((c) => c.isVisibleOnResume);
-  const [draftExperiences, setDraftExperiences] = useState(() => structuredClone(experiences));
-  const [draftEducation, setDraftEducation] = useState(() => structuredClone(education));
-  const [draftSkills, setDraftSkills] = useState(() => structuredClone(skills));
-  const [draftAchievements, setDraftAchievements] = useState(() => structuredClone(achievements));
-  const [draftResumeProjects, setDraftResumeProjects] = useState(() => structuredClone(resumeProjects));
-  const [draftLicenses, setDraftLicenses] = useState(() => structuredClone(licenses));
-  const [draftCertifications, setDraftCertifications] = useState(() => structuredClone(certifications));
-
-  useLayoutEffect(() => {
-    setDraftExperiences(structuredClone(experiences));
-    setDraftEducation(structuredClone(education));
-    setDraftSkills(structuredClone(skills));
-    setDraftAchievements(structuredClone(achievements));
-    setDraftResumeProjects(structuredClone(resumeProjects));
-    setDraftLicenses(structuredClone(licenses));
-    setDraftCertifications(structuredClone(certifications));
-  }, [experiences, education, skills, achievements, resumeProjects, licenses, certifications]);
-
-  const previewProfile = useMemo(
-    () => buildPreviewProfile(profile, profileDraft, resumeId),
-    [profile, profileDraft, resumeId],
-  );
-
-  /** Same props for on-screen previews and the off-screen PDF capture (must stay in sync). */
-  const previewProps: ResumePreviewProps = useMemo(
-    () => ({
-      employeeName,
-      profile: previewProfile,
-      experiences: draftExperiences.filter((e) => e.isVisibleOnResume),
-      education: draftEducation.filter((e) => e.isVisibleOnResume),
-      skills: draftSkills.filter((s) => s.isVisibleOnResume),
-      certifications: draftCertifications.filter((c) => c.isVisibleOnResume),
-      resumeProjects: draftResumeProjects.filter((p) => p.isVisibleOnResume),
-      licenses: draftLicenses.filter((l) => l.isVisibleOnResume),
-      achievements: draftAchievements.filter((a) => a.isVisibleOnResume),
-    }),
-    [
-      employeeName,
-      previewProfile,
-      draftExperiences,
-      draftEducation,
-      draftSkills,
-      draftCertifications,
-      draftResumeProjects,
-      draftLicenses,
-      draftAchievements,
-    ],
-  );
-
-  // ── Handler: change a profile field → mark unsaved ──
-  const handleProfileChange = useCallback((field: keyof PersonalDraft, value: string) => {
-    setProfileDraft((prev) => ({ ...prev, [field]: value }));
-    setHasUnsavedChanges(true);
-  }, []);
-
-  // ── Handler: Edit button ──
-  const handleEdit = useCallback(() => {
-    setIsLocked(false);
-  }, []);
-
-  // ── Handler: Cancel editing — discard drafts and lock again ──
-  const handleCancelEdit = useCallback(() => {
-    if (isLocked || isPendingReview || isSaving || isSubmitting) return;
-    setProfileDraft({
-      jobTitle: profile?.jobTitle ?? "",
-      professionalSummary: profile?.professionalSummary ?? "",
-      linkedInUrl: profile?.linkedInUrl ?? "",
-      homeAddress: profile?.homeAddress ?? "",
-      personalPhone: profile?.personalPhone ?? "",
-      personalEmail: profile?.personalEmail ?? "",
-    });
-    setDraftExperiences(structuredClone(experiences));
-    setDraftEducation(structuredClone(education));
-    setDraftSkills(structuredClone(skills));
-    setDraftAchievements(structuredClone(achievements));
-    setDraftResumeProjects(structuredClone(resumeProjects));
-    setDraftLicenses(structuredClone(licenses));
-    setDraftCertifications(structuredClone(certifications));
-    setHasUnsavedChanges(false);
-    setIsLocked(true);
-    toast.info("Changes discarded.");
-  }, [
-    isLocked,
-    isPendingReview,
-    isSaving,
-    isSubmitting,
+  const {
+    profileDraft,
+    setProfileDraft,
+    draftExperiences,
+    setDraftExperiences,
+    draftEducation,
+    setDraftEducation,
+    draftSkills,
+    setDraftSkills,
+    draftAchievements,
+    setDraftAchievements,
+    draftResumeProjects,
+    setDraftResumeProjects,
+    draftLicenses,
+    setDraftLicenses,
+    draftCertifications,
+    setDraftCertifications,
+    previewProps,
+    resetDrafts,
+  } = usePreviewState({
+    resumeId,
+    employeeName,
     profile,
     experiences,
     education,
     skills,
+    certifications,
     achievements,
     resumeProjects,
     licenses,
-    certifications,
-  ]);
+  });
 
-  // ── Handler: Save button ──
-  const handleSave = useCallback(async () => {
-    if (isLocked || !hasUnsavedChanges || isSaving) return;
-    if (!profileDraft.jobTitle.trim()) {
-      toast.error("Job title is required before saving.");
-      setActiveTab("personal");
-      return;
-    }
-    setIsSaving(true);
-    try {
-      const { approvalInvalidated } = await saveProfileAction(resumeId, {
-        jobTitle:            profileDraft.jobTitle.trim(),
-        professionalSummary: profileDraft.professionalSummary.trim(),
-        linkedInUrl:         profileDraft.linkedInUrl.trim() || null,
-        homeAddress:         profileDraft.homeAddress.trim() || null,
-        personalPhone:       profileDraft.personalPhone.trim() || null,
-        personalEmail:       profileDraft.personalEmail.trim() || null,
-      });
-      toast.success(
-        approvalInvalidated
-          ? "Cambios guardados. La aprobación de HR quedó anulada; vuelve a enviar a revisión cuando esté listo."
-          : "Cambios guardados correctamente.",
-      );
-      setHasUnsavedChanges(false);
-      setIsLocked(true);
-      bumpLastSaved();
-      router.refresh();
-    } catch {
-      toast.error("Could not save. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
-  }, [
+  const {
     isLocked,
-    hasUnsavedChanges,
-    isSaving,
-    profileDraft,
-    resumeId,
-    bumpLastSaved,
-    router,
-  ]);
-
-  // ── Handler: Submit button ──
-  const handleSubmitFinal = useCallback(async () => {
-    if (!isLocked || hasUnsavedChanges || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await submitForApprovalAction(resumeId);
-      toast.success("Resume submitted for HR review.");
-      router.refresh();
-    } catch {
-      toast.error("Could not submit. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [isLocked, hasUnsavedChanges, isSubmitting, resumeId, router]);
-
-  // Register actions in the header global context
-  useEffect(() => {
-    setEditorActions({
-      isLocked,
-      hasUnsavedChanges,
-      canEdit: !isLocked || status !== "PENDING_APPROVAL",
-      isSaving,
-      isSubmitting,
-      onEdit: handleEdit,
-      onSave: handleSave,
-      onCancel: handleCancelEdit,
-      onSubmit: handleSubmitFinal,
-    });
-    return () => setEditorActions(null);
-  }, [
-    isLocked,
-    hasUnsavedChanges,
-    status,
+    setIsLocked,
+    activeTab,
+    setActiveTab,
     isSaving,
     isSubmitting,
     handleEdit,
-    handleSave,
     handleCancelEdit,
+    handleSave,
     handleSubmitFinal,
-    setEditorActions,
-  ]);
+    isPendingReview,
+  } = useResumeEditor({
+    resumeId,
+    status,
+    profileDraft,
+    hasUnsavedChanges,
+    setHasUnsavedChanges,
+    resetDrafts,
+    bumpLastSaved,
+  });
 
-  const headerActions = useMemo(() => (
-    (!isLocked || hasUnsavedChanges || status === "DRAFT" || status === "NEEDS_CHANGES") ? (
-      <EditorActionBar
-        isLocked={isLocked}
-        hasUnsavedChanges={hasUnsavedChanges}
-        canEdit={!isLocked || status === "DRAFT" || status === "NEEDS_CHANGES"}
-        isSaving={isSaving}
-        isSubmitting={isSubmitting}
-        onEdit={handleEdit}
-        onSave={handleSave}
-        onCancel={handleCancelEdit}
-        onSubmit={handleSubmitFinal}
-      />
-    ) : null
-  ), [isLocked, hasUnsavedChanges, status, isSaving, isSubmitting, handleEdit, handleSave, handleCancelEdit, handleSubmitFinal]);
+  const { tabStripScrollRef, tabStripScroll, scrollTabStrip } = useTabScroll(activeTab);
+  const { editorChromeRef, editorChromeHeight } = useEditorChromeHeight();
+
+  const handleProfileChange = useCallback(
+    (field: keyof PersonalDraft, value: string) => {
+      setProfileDraft((prev) => ({ ...prev, [field]: value }));
+      setHasUnsavedChanges(true);
+    },
+    [setProfileDraft, setHasUnsavedChanges],
+  );
+
+  const headerActions = useMemo(
+    () =>
+      !isLocked ||
+      hasUnsavedChanges ||
+      status === "DRAFT" ||
+      status === "NEEDS_CHANGES" ? (
+        <EditorActionBar
+          isLocked={isLocked}
+          hasUnsavedChanges={hasUnsavedChanges}
+          canEdit={!isLocked || status === "DRAFT" || status === "NEEDS_CHANGES"}
+          isSaving={isSaving}
+          isSubmitting={isSubmitting}
+          onEdit={handleEdit}
+          onSave={handleSave}
+          onCancel={handleCancelEdit}
+          onSubmit={handleSubmitFinal}
+        />
+      ) : null,
+    [
+      isLocked,
+      hasUnsavedChanges,
+      status,
+      isSaving,
+      isSubmitting,
+      handleEdit,
+      handleSave,
+      handleCancelEdit,
+      handleSubmitFinal,
+    ],
+  );
 
   // ── WYSIWYG PDF: capture the on-screen ResumePreview (Brindley layout) ──
   const handleExportPdf = useCallback(async (mode: "download" | "print") => {
@@ -548,7 +312,7 @@ export function ResumeEditorClient({
         const pageEl = pages[i] as HTMLElement;
         
         const canvas = await html2canvas(pageEl, {
-          scale: 3, // High quality
+          scale: 2, // Balanced quality/performance
           useCORS: true,
           allowTaint: false,
           backgroundColor: "#ffffff",

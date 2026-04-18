@@ -113,17 +113,26 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
   ) {
     const [logoOk, setLogoOk] = useState(true);
 
-    const hasBodyContent =
-      experiences.length > 0 ||
-      education.length > 0 ||
-      skills.length > 0 ||
-      certifications.length > 0 ||
-      resumeProjects.length > 0 ||
-      licenses.length > 0 ||
-      achievements.length > 0;
+    // Centralized filtering (TD-08)
+    const visibleExp = experiences.filter((e) => e.isVisibleOnResume);
+    const visibleEdu = education.filter((e) => e.isVisibleOnResume);
+    const visibleSkills = skills.filter((s) => s.isVisibleOnResume);
+    const visibleCerts = certifications.filter((c) => c.isVisibleOnResume);
+    const visibleProjects = resumeProjects.filter((p) => p.isVisibleOnResume);
+    const visibleLicenses = licenses.filter((l) => l.isVisibleOnResume);
+    const visibleAchievements = achievements.filter((a) => a.isVisibleOnResume);
 
-    const sidebarCerts = certifications.slice(0, 5);
-    const peFeCerts = certifications.filter((c) =>
+    const hasBodyContent =
+      visibleExp.length > 0 ||
+      visibleEdu.length > 0 ||
+      visibleSkills.length > 0 ||
+      visibleCerts.length > 0 ||
+      visibleProjects.length > 0 ||
+      visibleLicenses.length > 0 ||
+      visibleAchievements.length > 0;
+
+    const sidebarCerts = visibleCerts.slice(0, 5);
+    const peFeCerts = visibleCerts.filter((c) =>
       isPeFeCertification(c.certificationName),
     );
 
@@ -218,12 +227,12 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   </p>
                 </section>
 
-                {licenses.length > 0 || certifications.length > 0 ? (
+                {visibleLicenses.length > 0 || visibleCerts.length > 0 ? (
                   <section className="mb-4">
                     <LeftSectionTitle>Licenses / Certifications</LeftSectionTitle>
                     <ul className="space-y-2">
                       {/* --- Licenses --- */}
-                      {licenses.map((lic) => (
+                      {visibleLicenses.map((lic) => (
                         <li key={lic.id} className="flex gap-2 text-[11pt] text-[#000000]">
                           <span className="shrink-0 font-bold" style={{ color: ORANGE }}>•</span>
                           <div className="flex-1">
@@ -240,7 +249,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                       ))}
                       
                       {/* --- Certifications --- */}
-                      {certifications.map((cert) => (
+                      {visibleCerts.map((cert) => (
                         <li key={cert.id} className="flex gap-2 text-[11pt] text-[#000000]">
                           <span className="shrink-0 font-bold" style={{ color: ORANGE }}>•</span>
                           <div className="flex-1">
@@ -257,11 +266,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
 
 
-                {education.length > 0 ? (
+                {visibleEdu.length > 0 ? (
                   <section className="mb-4">
                     <LeftSectionTitle>Education</LeftSectionTitle>
                     <div className="flex flex-col gap-3">
-                      {education.map((edu) => (
+                      {visibleEdu.map((edu) => (
                         <div key={edu.id}>
                           <p className="text-[11pt] font-bold text-[#000000]">
                             {edu.institutionName}
@@ -276,11 +285,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   </section>
                 ) : null}
 
-                {achievements.length > 0 ? (
+                {visibleAchievements.length > 0 ? (
                   <section className="mb-4">
                     <LeftSectionTitle>Achievements</LeftSectionTitle>
                     <ul className="space-y-2">
-                      {achievements.map((ach) => (
+                      {visibleAchievements.map((ach) => (
                         <li key={ach.id} className="flex gap-2 text-[11pt] text-[#000000]">
                           <span className="shrink-0 font-bold" style={{ color: ORANGE }}>
                             •
@@ -301,11 +310,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   </section>
                 ) : null}
 
-                {skills.length > 0 ? (
+                {visibleSkills.length > 0 ? (
                   <section className="mb-4">
                     <LeftSectionTitle>Expertise</LeftSectionTitle>
                     <ul className="space-y-1">
-                      {skills.map((skill) => (
+                      {visibleSkills.map((skill) => (
                         <li key={skill.id} className="flex gap-2 text-[11pt] text-[#000000]">
                           <span className="shrink-0 font-bold" style={{ color: ORANGE }}>
                             •
@@ -322,11 +331,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
               {/* Right column (white) — same stretched height as sidebar */}
               <main className="box-border min-h-0 min-w-0 flex-1 self-stretch bg-white px-8 py-5">
-                {experiences.length > 0 ? (
+                {visibleExp.length > 0 ? (
                   <section className="mb-5">
                     <RightSectionTitle>Professional Experience</RightSectionTitle>
                     <div className="flex flex-col gap-4">
-                      {experiences.map((exp) => {
+                      {visibleExp.map((exp) => {
                         const loc = exp.location?.trim();
                         const companyLine = loc
                           ? `${exp.companyName} | ${loc}`
@@ -336,6 +345,8 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                             .split("\n")
                             .map((l) => l.replace(/^[-•]\s*/, "").trim())
                             .filter(Boolean)
+                            .join("\n") // Keep as string for splitting again? No, map it.
+                            .split("\n")
                           : [];
                         return (
                           <div key={exp.id}>
@@ -369,11 +380,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   </section>
                 ) : null}
 
-                {resumeProjects.length > 0 ? (
+                {visibleProjects.length > 0 ? (
                   <section className="mb-5">
                     <RightSectionTitle>Relevant Project Experience</RightSectionTitle>
                     <ul className="space-y-3">
-                      {resumeProjects.map((p) => {
+                      {visibleProjects.map((p) => {
                         const header = formatProjectHeaderLine(p);
                         const desc = (p.description ?? "").trim();
                         const descLines = desc
