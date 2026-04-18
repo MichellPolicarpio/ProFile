@@ -10,6 +10,7 @@ import type {
   Certification,
   ResumeProject,
   License,
+  Achievement,
 } from "@/lib/db/types";
 
 export type ResumePreviewProps = {
@@ -21,6 +22,7 @@ export type ResumePreviewProps = {
   certifications: Certification[];
   resumeProjects: ResumeProject[];
   licenses: License[];
+  achievements: Achievement[];
   className?: string;
   style?: React.CSSProperties;
 };
@@ -103,6 +105,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       certifications,
       resumeProjects,
       licenses,
+      achievements = [],
       className,
       style,
     },
@@ -116,7 +119,8 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       skills.length > 0 ||
       certifications.length > 0 ||
       resumeProjects.length > 0 ||
-      licenses.length > 0;
+      licenses.length > 0 ||
+      achievements.length > 0;
 
     const sidebarCerts = certifications.slice(0, 5);
     const peFeCerts = certifications.filter((c) =>
@@ -269,6 +273,31 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                         </div>
                       ))}
                     </div>
+                  </section>
+                ) : null}
+
+                {achievements.length > 0 ? (
+                  <section className="mb-4">
+                    <LeftSectionTitle>Achievements</LeftSectionTitle>
+                    <ul className="space-y-2">
+                      {achievements.map((ach) => (
+                        <li key={ach.id} className="flex gap-2 text-[11pt] text-[#000000]">
+                          <span className="shrink-0 font-bold" style={{ color: ORANGE }}>
+                            •
+                          </span>
+                          <div className="flex-1 text-left">
+                            <p className="font-bold leading-tight">
+                              {ach.year ? `${ach.year} | ` : ""}{ach.title}
+                            </p>
+                            {ach.organization ? (
+                              <p className="text-[10pt] opacity-85 leading-snug">
+                                {ach.organization}
+                              </p>
+                            ) : null}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   </section>
                 ) : null}
 

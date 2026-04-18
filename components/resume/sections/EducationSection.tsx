@@ -141,12 +141,12 @@ function EducationCard({
       className={cn(
         "group relative flex items-start gap-4 rounded-xl border border-neutral-200 bg-white p-5 transition-all hover:border-neutral-300 hover:shadow-md",
         isDragging && "z-50 opacity-50",
+        !item.isVisibleOnResume && "opacity-60 bg-neutral-50/50",
       )}
     >
       <div className="flex shrink-0 flex-col items-center justify-center gap-3 border-r border-neutral-100 pr-4">
         <button
           type="button"
-          disabled={disabled}
           onClick={() => onToggleVisibility(item.id, !item.isVisibleOnResume)}
           className="rounded-md p-1 transition-colors hover:bg-neutral-100"
           title={item.isVisibleOnResume ? "Hide from resume" : "Show on resume"}

@@ -353,6 +353,7 @@ export function ResumeEditorClient({
       certifications: draftCertifications.filter((c) => c.isVisibleOnResume),
       resumeProjects: draftResumeProjects.filter((p) => p.isVisibleOnResume),
       licenses: draftLicenses.filter((l) => l.isVisibleOnResume),
+      achievements: draftAchievements.filter((a) => a.isVisibleOnResume),
     }),
     [
       employeeName,
@@ -363,6 +364,7 @@ export function ResumeEditorClient({
       draftCertifications,
       draftResumeProjects,
       draftLicenses,
+      draftAchievements,
     ],
   );
 

@@ -501,15 +501,14 @@ function ListItem({ text }: { text: string }) {
 }
 
 export function ResumePdfDocument({ data }: { data: FullResumeData }) {
-  const {
-    employee,
-    profile,
-    workExperiences,
-    education,
-    skills,
-    certifications,
-    resumeProjects,
-  } = data;
+  const { employee, profile } = data;
+  const workExperiences = data.workExperiences.filter((e) => e.isVisibleOnResume);
+  const education = data.education.filter((e) => e.isVisibleOnResume);
+  const skills = data.skills.filter((s) => s.isVisibleOnResume);
+  const certifications = data.certifications.filter((c) => c.isVisibleOnResume);
+  const resumeProjects = data.resumeProjects.filter((p) => p.isVisibleOnResume);
+  const achievements = data.achievements?.filter((a) => a.isVisibleOnResume) ?? [];
+  const licenses = data.licenses?.filter((l) => l.isVisibleOnResume) ?? [];
 
   const logoPath = `${process.cwd()}/public/BE_Logo_Orange_Dark_TM.png`;
   const sidebarCerts = certifications.slice(0, 5);
@@ -601,6 +600,41 @@ export function ResumePdfDocument({ data }: { data: FullResumeData }) {
                         }}
                       />
                     </View>
+                  </View>
+                ))}
+              </>
+            ) : null}
+
+            {licenses.length > 0 ? (
+              <>
+                <LeftSectionTitle>Licenses</LeftSectionTitle>
+                {licenses.map((lic) => {
+                  const label = [lic.licenseType, lic.jurisdiction, lic.status]
+                    .filter(Boolean)
+                    .join(" | ");
+                  return (
+                    <View key={lic.id} style={styles.entryContainer}>
+                      <Text style={{ ...styles.institutionText, fontSize: 10 }}>{label}</Text>
+                      {lic.licenseNumber ? (
+                        <Text style={{ ...styles.degreeText, fontSize: 9 }}>No. {lic.licenseNumber}</Text>
+                      ) : null}
+                    </View>
+                  );
+                })}
+              </>
+            ) : null}
+
+            {achievements.length > 0 ? (
+              <>
+                <LeftSectionTitle>Achievements</LeftSectionTitle>
+                {achievements.map((ach) => (
+                  <View key={ach.id} style={styles.entryContainer}>
+                    <Text style={{ ...styles.institutionText, fontSize: 10 }}>
+                      {ach.year ? `${ach.year} | ` : ""}{ach.title}
+                    </Text>
+                    {ach.organization ? (
+                      <Text style={{ ...styles.degreeText, fontSize: 9 }}>{ach.organization}</Text>
+                    ) : null}
                   </View>
                 ))}
               </>
